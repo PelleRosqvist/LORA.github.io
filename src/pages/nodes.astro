@@ -62,7 +62,7 @@ const nodes = [
 
   // 1. Inställningar för liamcottle
   // Vi använder wss (Websocket Secure) på port 8084
-  const brokerUrl = 'wss://mqtt.meshtastic.org/api/v2:433/mqtt';
+  const brokerUrl = 'wss://broker.emqx.io:8084/mqtt';
   
   const options = {
     clientId: 'lora_web_' + Math.random().toString(16).slice(2, 8),
@@ -70,7 +70,7 @@ const nodes = [
     connectTimeout: 4000,
   };
 
-  console.log('Ansluter till Liam Cottle´s-Broker...');
+  console.log('Ansluter till Emqx-Broker...');
   const client = mqtt.connect(brokerUrl, options);
 
   // 2. Vid anslutning - börja prenumerera
