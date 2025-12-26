@@ -39,10 +39,14 @@ const nodes = [
 ---
 
 <MainLayouts title="Nod-översikt | LORA">
+  
   <div class="mb-10">
     <h1 class="text-4xl font-black text-gray-900 mb-2">Driftstatus</h1>
     <p class="text-gray-500 italic">Driftstatus för Meshtastic-nätverket.</p>
-  </div>
+  
+  <div id="connection-status" class="text-[10px] font-bold text-yellow-600 animate-pulse">
+  ANSLUTEN TILL BROKER - VÄNTAR PÅ DATA...
+</div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {nodes.map((node) => (
@@ -52,6 +56,12 @@ const nodes = [
 
 <script>
   import mqtt from 'mqtt';
+
+  // När ett meddelande landar in släcks väntar på data skylten
+client.on('message', () => {
+  document.getElementById('connection-status').style.display = 'none';
+});
+
 
   // 1. Inställningar för HiveMQ
   // Vi använder wss (Websocket Secure) på port 8084
@@ -71,7 +81,7 @@ const nodes = [
     console.log('✅ Ansluten till MQTT Broker!');
     // Här sätter du din topic. 
     // Om du använder Meshtastic standard JSON, ändra till din topic:
-    client.subscribe('msh/EU_868/#', (err) => {
+    client.subscribe('msh/EU_868/SE/#', (err) => {
       if (!err) {
         console.log('Prenumererar på Meshtastic JSON-data');
       }
