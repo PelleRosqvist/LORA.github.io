@@ -2,13 +2,40 @@
 import MainLayouts from '../layouts/MainLayouts.astro';
 import NodeCard from '../components/NodeCard.astro';
 
+import mqtt from 'mqtt';
+
+
+
 // Testdata (Här kan du senare hämta data från ett API)
 const nodes = [
-  { name: "LORA-GBG-01", voltage: 3.82, battery: 84, channelUtil: 14.2, airUtil: 1.2, lastUpdate: "14:22:10", powerType: "solar", status: "online" },
-  { name: "LORA-HILLS", voltage: 3.45, battery: 18, channelUtil: 8.5, airUtil: 0.8, lastUpdate: "14:15:05", powerType: "solar", status: "online" },
-  { name: "LORA-BASE-1", voltage: 5.10, battery: 100, channelUtil: 22.1, airUtil: 3.5, lastUpdate: "12:00:00", powerType: "plug", status: "offline" },
-  { name: "LORA-EAST-02", voltage: 4.10, battery: 92, channelUtil: 10.0, airUtil: 1.1, lastUpdate: "14:20:55", powerType: "plug", status: "online" },
+{ 
+    nodeHexId: "!9ea1bb30", // Detta ID hittar du i Meshtastic-appen (t.ex. !f4a2)
+    name: "Hka bb30", 
+    powerType: "plug" 
+  },
+{ 
+    nodeHexId: "!6985a080", // Detta ID hittar du i Meshtastic-appen (t.ex. !f4a2)
+    name: "Hka a080", 
+    powerType: "plug" 
+  },
+{ 
+    nodeHexId: "!849b96f4", // Detta ID hittar du i Meshtastic-appen (t.ex. !f4a2)
+    name: "RAKLA", 
+    powerType: "plug" 
+  },
+  { 
+    nodeHexId: "!9e780860", // Detta ID hittar du i Meshtastic-appen (t.ex. !f4a2)
+    name: "Huskvarna fast punkt 01", 
+    powerType: "plug" 
+  },
+{ 
+    nodeHexId: "!lf288732", // Detta ID hittar du i Meshtastic-appen (t.ex. !f4a2)
+    name: "YDRE Nod 01 (RAF)", 
+    powerType: "solar" 
+  },
+
 ];
+
 ---
 
 <MainLayouts title="Nod-översikt | LORA">
@@ -22,4 +49,78 @@ const nodes = [
       <NodeCard {...node} />
     ))}
   </div>
+
+<script>
+  import mqtt from 'mqtt';
+
+  // 1. Inställningar för HiveMQ
+  // Vi använder wss (Websocket Secure) på port 8084
+  const brokerUrl = 'wss://broker.emqx.io:8084/mqtt';
+  
+  const options = {
+    clientId: 'lora_web_' + Math.random().toString(16).slice(2, 8),
+    clean: true,
+    connectTimeout: 4000,
+  };
+
+  console.log('Ansluter till Emqx-Broker...');
+  const client = mqtt.connect(brokerUrl, options);
+
+  // 2. Vid anslutning - börja prenumerera
+  client.on('connect', () => {
+    console.log('✅ Ansluten till MQTT Broker!');
+    // Här sätter du din topic. 
+    // Om du använder Meshtastic standard JSON, ändra till din topic:
+    client.subscribe('msh/EU_868/#', (err) => {
+      if (!err) {
+        console.log('Prenumererar på Meshtastic JSON-data');
+      }
+    });
+  });
+
+  // 3. När ett meddelande landar
+  client.on('message', (topic, message) => {
+    try {
+      const data = JSON.parse(message.toString());
+      console.log('Ny data mottagen:', data);
+
+      // Meshtastic skickar ofta 'from' som ett decimalt tal. 
+      // Vi gör om det till Hex och lägger till '!' för att matcha Meshtastic-standard
+      const hexId = '!' + data.from.toString(16).toLowerCase();
+      
+      // Hitta rätt box i HTML-koden
+      const card = document.getElementById(`node-${hexId}`);
+
+      if (card) {
+        // Uppdatera Batteri om det finns i paketet
+        if (data.payload?.battery_level !== undefined) {
+          const batteryEl = card.querySelector('.node-battery');
+          if (batteryEl) batteryEl.innerText = data.payload.battery_level + '%';
+        }
+
+        // Uppdatera Spänning (Voltage)
+        if (data.payload?.voltage !== undefined) {
+          const voltageEl = card.querySelector('.node-voltage');
+          if (voltageEl) voltageEl.innerText = data.payload.voltage.toFixed(2) + 'v';
+        }
+
+        // Uppdatera tidsstämpel
+        const timeEl = card.querySelector('.node-lastseen');
+        if (timeEl) timeEl.innerText = new Date().toLocaleTimeString();
+
+        // En liten visuell "blixt" för att visa att data kom in
+        card.classList.add('border-blue-400');
+        setTimeout(() => card.classList.remove('border-blue-400'), 1000);
+      }
+    } catch (e) {
+      console.error('Kunde inte tolka JSON-data', e);
+    }
+  });
+
+  client.on('error', (err) => {
+    console.error('MQTT Connection Error: ', err);
+    client.end();
+  });
+</script>
+
 </MainLayouts>
