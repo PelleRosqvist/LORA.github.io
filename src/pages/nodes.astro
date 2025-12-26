@@ -1,0 +1,25 @@
+---
+import MainLayouts from '../layouts/MainLayouts.astro';
+import NodeCard from '../components/NodeCard.astro';
+
+// Testdata (Här kan du senare hämta data från ett API)
+const nodes = [
+  { name: "LORA-GBG-01", voltage: 3.82, battery: 84, channelUtil: 14.2, airUtil: 1.2, lastUpdate: "14:22:10", powerType: "solar", status: "online" },
+  { name: "LORA-HILLS", voltage: 3.45, battery: 18, channelUtil: 8.5, airUtil: 0.8, lastUpdate: "14:15:05", powerType: "solar", status: "online" },
+  { name: "LORA-BASE-1", voltage: 5.10, battery: 100, channelUtil: 22.1, airUtil: 3.5, lastUpdate: "12:00:00", powerType: "plug", status: "offline" },
+  { name: "LORA-EAST-02", voltage: 4.10, battery: 92, channelUtil: 10.0, airUtil: 1.1, lastUpdate: "14:20:55", powerType: "plug", status: "online" },
+];
+---
+
+<MainLayouts title="Nod-översikt | LORA">
+  <div class="mb-10">
+    <h1 class="text-4xl font-black text-gray-900 mb-2">Driftstatus</h1>
+    <p class="text-gray-500 italic">Driftstatus för Meshtastic-nätverket.</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {nodes.map((node) => (
+      <NodeCard {...node} />
+    ))}
+  </div>
+</MainLayouts>

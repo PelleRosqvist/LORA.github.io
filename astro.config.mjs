@@ -1,8 +1,8 @@
 import { defineConfig } from 'astro/config';
 import tailwind from '@astrojs/tailwind';
 
+// Se till att INGEN rad här uppe importerar '@tailwindcss/vite'
 export default defineConfig({
-  site: 'https://PelleRosqvist.github.io',
-  base: '/LORA.github.io',
   integrations: [tailwind()],
+  base: '/LORA.github.io', // Lägg till denna rad!
 });
