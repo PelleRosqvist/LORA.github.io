@@ -41,10 +41,10 @@ const nodes = [
 <MainLayouts title="Nod-översikt | LORA">
   
   <div class="mb-10">
-    <h1 class="text-4xl font-black text-gray-900 mb-2">Driftstatus</h1>
+    <h1 class="text-4xl font-black text-yellow-400 mb-2">Driftstatus</h1>
     <p class="text-gray-500 italic">Driftstatus för Meshtastic-nätverket.</p>
   
-  <div id="connection-status" class="text-[10px] font-bold text-yellow-600 animate-pulse">
+  <div id="connection-status" class="text-[10px] font-bold text-yellow-400 animate-pulse">
   ANSLUTEN TILL BROKER - VÄNTAR PÅ DATA...
 </div>
 
@@ -57,15 +57,12 @@ const nodes = [
 <script>
   import mqtt from 'mqtt';
 
-  // När ett meddelande landar in släcks väntar på data skylten
-client.on('message', () => {
-  document.getElementById('connection-status').style.display = 'none';
-});
+ 
 
 
-  // 1. Inställningar för HiveMQ
+  // 1. Inställningar för liamcottle
   // Vi använder wss (Websocket Secure) på port 8084
-  const brokerUrl = 'wss://broker.emqx.io:8084/mqtt';
+  const brokerUrl = 'wss://mqtt.meshtastic.org/api/v2:433/mqtt';
   
   const options = {
     clientId: 'lora_web_' + Math.random().toString(16).slice(2, 8),
@@ -73,7 +70,7 @@ client.on('message', () => {
     connectTimeout: 4000,
   };
 
-  console.log('Ansluter till Emqx-Broker...');
+  console.log('Ansluter till Liam Cottle´s-Broker...');
   const client = mqtt.connect(brokerUrl, options);
 
   // 2. Vid anslutning - börja prenumerera
@@ -81,12 +78,17 @@ client.on('message', () => {
     console.log('✅ Ansluten till MQTT Broker!');
     // Här sätter du din topic. 
     // Om du använder Meshtastic standard JSON, ändra till din topic:
-    client.subscribe('msh/EU_868/SE/#', (err) => {
+    client.subscribe('msh/EU_868/2/json/LongFast/#', (err) => {
       if (!err) {
         console.log('Prenumererar på Meshtastic JSON-data');
       }
     });
   });
+
+  // När ett meddelande landar in släcks "väntar på data" skylten
+client.on('message', () => {
+  document.getElementById('connection-status').style.display = 'none';
+});
 
   // 3. När ett meddelande landar
   client.on('message', (topic, message) => {
