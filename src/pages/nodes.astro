@@ -1,10 +1,9 @@
 ---
 import MainLayouts from '../layouts/MainLayouts.astro';
 import NodeCard from '../components/NodeCard.astro';
+import { mqttServers } from '../config/mqtt-servers';
 
 import mqtt from 'mqtt';
-
-
 
 // Testdata (Här kan du senare hämta data från ett API)
 const nodes = [
@@ -71,135 +70,197 @@ const nodes = [
 
 <script>
   import mqtt from 'mqtt';
-
- 
-
-
-  // 1. Inställningar för HiveMQ
-  // Vi använder wss (Websocket Secure) på port 8884
-  const brokerUrl = 'wss://broker.hivemq.com:8884/mqtt';
+  import type { MqttServer } from '../config/mqtt-servers';
   
-  const options = {
-    clientId: 'lora_web_' + Math.random().toString(16).slice(2, 8),
-    clean: true,
-    connectTimeout: 4000,
-  };
+  // Hämta konfigurerade servrar från config-filen
+  const mqttServersConfig = [
+    {
+      id: 'hivemq',
+      name: 'HiveMQ Public Broker',
+      brokerUrl: 'wss://broker.hivemq.com:8884/mqtt',
+      topic: 'msh/+/+/json/#',
+      enabled: true,
+    },
+    {
+      id: 'local',
+      name: 'Local Broker',
+      brokerUrl: 'wss://localhost:8884/mqtt',
+      topic: 'msh/+/+/json/#',
+      enabled: false,
+    },
+    {
+      id: 'custom',
+      name: 'Custom Broker',
+      brokerUrl: 'wss://your-broker.com:8884/mqtt',
+      topic: 'msh/+/+/json/#',
+      enabled: false,
+    },
+  ];
 
-  console.log('Ansluter till hivemq-Broker...');
-  const client = mqtt.connect(brokerUrl, options);
+  // Spåra anslutningsstatus för alla servrar
+  const connectionStatus: Record<string, boolean> = {};
+  const enabledServersCount = mqttServersConfig.filter(s => s.enabled).length;
 
-  // 2. Vid anslutning - börja prenumerera
-  client.on('connect', () => {
-    console.log('✅ Ansluten till MQTT Broker!');
-    // Här sätter du din topic. 
-    // Om du använder Meshtastic standard JSON, ändra till din topic:
-    client.subscribe('msh/+/+/json/#', (err) => {
-      if (!err) {
-        console.log('Prenumererar på Meshtastic JSON-data');
-      }
-    });
+  // Initiera connectionStatus för alla servrar (false tills connect sätter true)
+  mqttServersConfig.forEach(server => {
+    connectionStatus[server.id] = false;
   });
 
-  // --- HÄR BÖRJAR DEN NYA LOGIKEN ---
-    client.on('message', (topic, message) => {
-      try {
-        const data = JSON.parse(message.toString());
-        
-        // 1. Skapa ID:t (viktigt med padding för att matcha !9ea1bb30)
-        const hexId = '!' + data.from.toString(16).toLowerCase();
-        
-        // 2. Hitta rätt kort i HTML-trädet
-        const card = document.getElementById(`node-${hexId}`);
+  // Funktion för att ansluta till en broker
+  function connectToBroker(server: any) {
+    if (!server.enabled) {
+      console.log(`${server.name} är inaktiverad, hoppar över...`);
+      return;
+    }
 
-        if (card) {
-          // Dölj "väntar"-skylten när första matchen hittas
-          const statusEl = document.getElementById('connection-status');
-          if (statusEl) statusEl.style.display = 'none';
+    const options = {
+      clientId: `lora_web_${server.id}_${Math.random().toString(16).slice(2, 8)}`,
+      clean: true,
+      connectTimeout: 4000,
+    };
 
-          // A. Uppdatera BATTERI
-          if (data.payload?.battery_level !== undefined) {
-            const batEl = card.querySelector('.node-battery');
-            if (batEl) {
-              batEl.innerText = data.payload.battery_level + '%';
-              // Bonus: Ändra färg dynamiskt
-              if (data.payload.battery_level < 20) batEl.className = 'node-battery text-lg font-bold text-red-500';
-            }
-          }
+    console.log(`Ansluter till ${server.name}...`);
+    const client = mqtt.connect(server.brokerUrl, options);
 
-          // B. Uppdatera SPÄNNING
-          if (data.payload?.voltage !== undefined) {
-            const voltEl = card.querySelector('.node-voltage');
-            if (voltEl) voltEl.innerText = data.payload.voltage.toFixed(2) + 'v';
-          }
-
-          // C. Uppdatera HÅRDVARA (Glyph-raden)
-          if (data.payload?.model) {
-            const hwEl = card.querySelector('.node-hw');
-            if (hwEl) hwEl.innerText = data.payload.model.replace(/_/g, ' ');
-          }
-
-          // D. Uppdatera TID
-          const timeEl = card.querySelector('.node-lastseen');
-          if (timeEl) timeEl.innerText = new Date().toLocaleTimeString();
-
-          // E. Visuell feedback (Blinka till)
-          card.classList.add('border-blue-400', 'scale-[1.02]');
-          setTimeout(() => card.classList.remove('border-blue-400', 'scale-[1.02]'), 500);
+    client.on('connect', () => {
+      connectionStatus[server.id] = true;
+      console.log(`✅ Ansluten till ${server.name}!`);
+      client.subscribe(server.topic, (err) => {
+        if (!err) {
+          console.log(`Prenumererar på ${server.topic} från ${server.name}`);
         }
-      } catch (e) {
-        console.error('Kunde inte tolka paket:', e);
-      }
+      });
+      // Kontrollera och skriv ut status
+      printConnectionStatus();
     });
-    // --- HÄR SLUTAR DEN NYA LOGIKEN ---
 
+    client.on('message', (topic, message) => {
+      handleMqttMessage(message.toString(), server.name);
+    });
 
-  // När ett meddelande landar in släcks "väntar på data" skylten
-client.on('message', () => {
-  document.getElementById('connection-status').style.display = 'none';
-});
+    client.on('error', (err) => {
+      connectionStatus[server.id] = false;
+      console.error(`MQTT Connection Error (${server.name}):`, err);
+      // Försöker återansluta automatiskt efter 5 sekunder
+      setTimeout(() => {
+        console.log(`Försöker återansluta till ${server.name}...`);
+        connectToBroker(server);
+      }, 5000);
+    });
 
-  // 3. När ett meddelande landar
-  client.on('message', (topic, message) => {
-    try {
-      const data = JSON.parse(message.toString());
-      console.log('Ny data mottagen:', data);
+    client.on('disconnect', () => {
+      connectionStatus[server.id] = false;
+      console.log(`Frånkopplad från ${server.name}`);
+    });
+  }
 
-      // Meshtastic skickar ofta 'from' som ett decimalt tal. 
-      // Vi gör om det till Hex och lägger till '!' för att matcha Meshtastic-standard
-      const hexId = '!' + data.from.toString(16).toLowerCase();
+  // Funktion för att skriva ut anslutningsstatus för alla servrar
+  function printConnectionStatus() {
+    const enabledServers = mqttServersConfig.filter(s => s.enabled);
+    const connectedServers = enabledServers.filter(s => connectionStatus[s.id] === true);
+    
+    if (connectedServers.length === enabledServersCount) {
+      console.clear();
+      console.log('%c═══════════════════════════════════════', 'color: #00FF00; font-weight: bold;');
+      console.log('%c✅ ALLA MQTT-SERVRAR ANSLUTNA', 'color: #00FF00; font-weight: bold; font-size: 14px;');
+      console.log('%c═══════════════════════════════════════', 'color: #00FF00; font-weight: bold;');
       
-      // Hitta rätt box i HTML-koden
+      enabledServers.forEach(server => {
+        if (connectionStatus[server.id] === true) {
+          console.log(`%c✅ ${server.name}`, 'color: #00FF00; font-weight: bold;');
+        }
+      });
+      
+      console.log('%c═══════════════════════════════════════', 'color: #00FF00; font-weight: bold;');
+    }
+  }
+
+  // Funktion för att hantera inkommande MQTT-meddelanden
+  function handleMqttMessage(message: string, source: string) {
+    try {
+      const data = JSON.parse(message);
+      const hexId = '!' + data.from.toString(16).toLowerCase();
       const card = document.getElementById(`node-${hexId}`);
 
       if (card) {
-        // Uppdatera Batteri om det finns i paketet
+        // Dölj "väntar"-skylten när första matchen hittas
+        const statusEl = document.getElementById('connection-status');
+        if (statusEl) statusEl.style.display = 'none';
+
+        // Uppdatera BATTERI
         if (data.payload?.battery_level !== undefined) {
-          const batteryEl = card.querySelector('.node-battery');
-          if (batteryEl) batteryEl.innerText = data.payload.battery_level + '%';
+          const batEl = card.querySelector('.node-battery');
+          if (batEl) {
+            batEl.innerText = data.payload.battery_level + '%';
+            // Ändra färg dynamiskt
+            if (data.payload.battery_level < 20) {
+              batEl.className = 'node-battery text-lg font-bold text-red-500';
+            } else if (data.payload.battery_level < 50) {
+              batEl.className = 'node-battery text-lg font-bold text-yellow-600';
+            } else {
+              batEl.className = 'node-battery text-lg font-bold text-green-600';
+            }
+          }
         }
 
-        // Uppdatera Spänning (Voltage)
+        // Uppdatera SPÄNNING
         if (data.payload?.voltage !== undefined) {
-          const voltageEl = card.querySelector('.node-voltage');
-          if (voltageEl) voltageEl.innerText = data.payload.voltage.toFixed(2) + 'v';
+          const voltEl = card.querySelector('.node-voltage');
+          if (voltEl) voltEl.innerText = data.payload.voltage.toFixed(2) + 'v';
         }
 
-        // Uppdatera tidsstämpel
+        // Uppdatera HÅRDVARA
+        if (data.payload?.model) {
+          const hwEl = card.querySelector('.node-hw');
+          if (hwEl) hwEl.innerText = data.payload.model.replace(/_/g, ' ');
+        }
+
+        // Uppdatera POSITION om den finns i meddelandet
+        try {
+          const lat = data.payload?.position?.latitude ?? data.payload?.position?.lat ?? data.payload?.gps?.lat ?? data.payload?.gps?.latitude ?? data.payload?.lat ?? data.lat;
+          const lon = data.payload?.position?.longitude ?? data.payload?.position?.lon ?? data.payload?.gps?.lon ?? data.payload?.gps?.longitude ?? data.payload?.lon ?? data.lon;
+          if (lat !== undefined && lat !== null && lon !== undefined && lon !== null) {
+            const latNum = parseFloat(lat);
+            const lonNum = parseFloat(lon);
+            const posEl = card.querySelector('.node-position');
+            const wrapper = card.querySelector('.node-position-wrapper');
+            if (posEl) posEl.innerText = `${latNum.toFixed(6)}, ${lonNum.toFixed(6)}`;
+            if (wrapper) {
+              wrapper.classList.remove('hidden');
+              const mapLink = wrapper.querySelector('a');
+              if (mapLink) mapLink.href = `https://www.google.com/maps?q=${latNum},${lonNum}`;
+            }
+          }
+        } catch (e) {
+          // ignore parsing errors for position
+        }
+
+        // Uppdatera TID
         const timeEl = card.querySelector('.node-lastseen');
         if (timeEl) timeEl.innerText = new Date().toLocaleTimeString();
 
-        // En liten visuell "blixt" för att visa att data kom in
-        card.classList.add('border-blue-400');
-        setTimeout(() => card.classList.remove('border-blue-400'), 1000);
+        // Uppdatera KÄLLA (visa endast när data från källa kommer)
+        const sourceEl = card.querySelector('.node-source');
+        const sourceWrapper = card.querySelector('.node-source-wrapper');
+        if (sourceEl) {
+          sourceEl.innerText = source;
+        }
+        if (sourceWrapper) {
+          sourceWrapper.classList.remove('hidden');
+        }
+
+        // Visuell feedback (Blinka till)
+        card.classList.add('border-blue-400', 'scale-[1.02]');
+        setTimeout(() => card.classList.remove('border-blue-400', 'scale-[1.02]'), 500);
       }
     } catch (e) {
-      console.error('Kunde inte tolka JSON-data', e);
+      console.error('Kunde inte tolka paket:', e);
     }
-  });
+  }
 
-  client.on('error', (err) => {
-    console.error('MQTT Connection Error: ', err);
-    client.end();
+  // Anslut till alla aktiverade brokers
+  mqttServersConfig.forEach(server => {
+    connectToBroker(server);
   });
 </script>
 

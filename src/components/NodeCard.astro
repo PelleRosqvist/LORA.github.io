@@ -1,7 +1,7 @@
 ---
 // src/components/NodeCard.astro
 // Lägg till nodeHexId i props
-const { nodeHexId, name, voltage, battery, channelUtil, airUtil, lastUpdate, powerType, status, hardware } = Astro.props;
+const { nodeHexId, name, voltage, battery, channelUtil, airUtil, lastUpdate, powerType, status, hardware, source, latitude = null, longitude = null } = Astro.props;
 
 const batteryColor = battery < 20 ? 'text-red-500' : battery < 50 ? 'text-yellow-600' : 'text-green-600';
 ---
@@ -47,12 +47,23 @@ const batteryColor = battery < 20 ? 'text-red-500' : battery < 50 ? 'text-yellow
       </div>
     </div>
 
-    <div class="pt-2 flex items-center gap-1.5">
+    <div class="pt-2 flex items-center gap-1.5 border-t border-gray-100">
        <span class="relative flex h-2 w-2">
           <span class="ping-icon animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
           <span class="status-dot relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
        </span>
        <span class="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Uppdaterad: <span class="node-lastseen">{lastUpdate}</span></span>
+    </div>
+
+    <div class={`pt-3 text-xs text-gray-500 font-medium bg-gray-50 rounded-lg p-2 border border-gray-200 node-position-wrapper ${latitude && longitude ? '' : 'hidden'}`}>
+      <span class="text-gray-500">📍 Position:</span>
+      <span class="node-position ml-2 text-gray-900">{latitude && longitude ? `${latitude}, ${longitude}` : ''}</span>
+      <a class="ml-3 text-blue-600 text-xs" href={latitude && longitude ? `https://www.google.com/maps?q=${latitude},${longitude}` : '#'} target="_blank" rel="noopener noreferrer">Visa karta</a>
+    </div>
+
+    <div class="pt-3 text-xs text-gray-500 font-medium bg-gray-50 rounded-lg p-2 border border-gray-200 node-source-wrapper hidden">
+      <span class="text-blue-600">📡 Källa:</span>
+      <span class="node-source ml-2 text-gray-900"></span>
     </div>
   </div>
 </div>
