@@ -40,12 +40,12 @@ const nodes = [
   },
 { 
     nodeHexId: "!9e75f9e0", // Detta ID hittar du i Meshtastic-appen (t.ex. !f4a2)
-    name: "Okänd Test router", 
+    name: "Okänd Test router (HIVE-TEST)", 
     powerType: "plug" 
   },
 { 
     nodeHexId: "!e0f604d8", // Detta ID hittar du i Meshtastic-appen (t.ex. !f4a2)
-    name: "Tor zum Kamptal - Router (TEST)", 
+    name: "Tor zum Kamptal - Router (HIVE-TEST)", 
     powerType: "plug" 
   },
 
@@ -75,7 +75,7 @@ const nodes = [
  
 
 
-  // 1. Inställningar för liamcottle
+  // 1. Inställningar för HiveMQ
   // Vi använder wss (Websocket Secure) på port 8884
   const brokerUrl = 'wss://broker.hivemq.com:8884/mqtt';
   
@@ -99,6 +99,59 @@ const nodes = [
       }
     });
   });
+
+  // --- HÄR BÖRJAR DEN NYA LOGIKEN ---
+    client.on('message', (topic, message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        
+        // 1. Skapa ID:t (viktigt med padding för att matcha !9ea1bb30)
+        const hexId = '!' + data.from.toString(16).toLowerCase();
+        
+        // 2. Hitta rätt kort i HTML-trädet
+        const card = document.getElementById(`node-${hexId}`);
+
+        if (card) {
+          // Dölj "väntar"-skylten när första matchen hittas
+          const statusEl = document.getElementById('connection-status');
+          if (statusEl) statusEl.style.display = 'none';
+
+          // A. Uppdatera BATTERI
+          if (data.payload?.battery_level !== undefined) {
+            const batEl = card.querySelector('.node-battery');
+            if (batEl) {
+              batEl.innerText = data.payload.battery_level + '%';
+              // Bonus: Ändra färg dynamiskt
+              if (data.payload.battery_level < 20) batEl.className = 'node-battery text-lg font-bold text-red-500';
+            }
+          }
+
+          // B. Uppdatera SPÄNNING
+          if (data.payload?.voltage !== undefined) {
+            const voltEl = card.querySelector('.node-voltage');
+            if (voltEl) voltEl.innerText = data.payload.voltage.toFixed(2) + 'v';
+          }
+
+          // C. Uppdatera HÅRDVARA (Glyph-raden)
+          if (data.payload?.model) {
+            const hwEl = card.querySelector('.node-hw');
+            if (hwEl) hwEl.innerText = data.payload.model.replace(/_/g, ' ');
+          }
+
+          // D. Uppdatera TID
+          const timeEl = card.querySelector('.node-lastseen');
+          if (timeEl) timeEl.innerText = new Date().toLocaleTimeString();
+
+          // E. Visuell feedback (Blinka till)
+          card.classList.add('border-blue-400', 'scale-[1.02]');
+          setTimeout(() => card.classList.remove('border-blue-400', 'scale-[1.02]'), 500);
+        }
+      } catch (e) {
+        console.error('Kunde inte tolka paket:', e);
+      }
+    });
+    // --- HÄR SLUTAR DEN NYA LOGIKEN ---
+
 
   // När ett meddelande landar in släcks "väntar på data" skylten
 client.on('message', () => {

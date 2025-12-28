@@ -1,19 +1,19 @@
 ---
 // src/components/NodeCard.astro
-const { name, voltage, battery, channelUtil, airUtil, lastUpdate, powerType, status, hardware } = Astro.props;
+// Lägg till nodeHexId i props
+const { nodeHexId, name, voltage, battery, channelUtil, airUtil, lastUpdate, powerType, status, hardware } = Astro.props;
 
-// Logik för att välja färg på batteriet
 const batteryColor = battery < 20 ? 'text-red-500' : battery < 50 ? 'text-yellow-600' : 'text-green-600';
 ---
 
-<div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all border-b-4 border-b-blue-500">
+<div id={`node-${nodeHexId.toLowerCase()}`} class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all border-b-4 border-b-blue-500">
   <div class="flex justify-between items-start mb-6">
     <div>
       <h3 class="font-bold text-xl text-gray-900 flex items-center gap-2">
         {name}
         {status === 'offline' && <span class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full uppercase tracking-tighter font-black italic">Offline</span>}
       </h3>
-      <p class="text-xs text-gray-400 font-mono mt-1">ID: {Math.random().toString(16).slice(2, 8).toUpperCase()}</p>
+      <p class="text-xs text-gray-400 font-mono mt-1 uppercase">ID: {nodeHexId}</p>
     </div>
     <div class="text-2xl">
       {powerType === 'solar' ? '☀️' : '🔌'}
@@ -24,36 +24,35 @@ const batteryColor = battery < 20 ? 'text-red-500' : battery < 50 ? 'text-yellow
     <div class="grid grid-cols-2 gap-4">
       <div class="bg-gray-50 p-3 rounded-lg">
         <p class="text-[10px] uppercase text-gray-400 font-bold mb-1">Voltage</p>
-        <p class="text-lg font-semibold text-gray-800">{voltage}v</p>
+        <p class="node-voltage text-lg font-semibold text-gray-800">{voltage}v</p>
       </div>
       <div class="bg-gray-50 p-3 rounded-lg">
         <p class="text-[10px] uppercase text-gray-400 font-bold mb-1">Battery</p>
-        <p class={`text-lg font-bold ${batteryColor}`}>{battery}%</p>
+        <p class={`node-battery text-lg font-bold ${batteryColor}`}>{battery}%</p>
       </div>
     </div>
 
     <div class="space-y-2 border-t border-gray-100 pt-4">
       <div class="flex justify-between text-sm">
         <span class="text-gray-500">📡 Channel Util</span>
-        <span class="font-medium text-gray-900">{channelUtil}%</span>
+        <span class="node-chutil font-medium text-gray-900">{channelUtil}%</span>
       </div>
       <div class="flex justify-between text-sm">
         <span class="text-gray-500">✈ Air Util TX</span>
-        <span class="font-medium text-gray-900">{airUtil}%</span>
+        <span class="node-airutil font-medium text-gray-900">{airUtil}%</span>
       </div>
-    <div class="flex justify-between text-sm">
-        <span class="text-gray-500">☼ Hardware</span>
-        <span class="font-medium text-gray-900">{hardware}</span>
+      <div class="flex justify-between text-sm">
+        <span class="text-gray-500">&#x1F527; Hardware</span>
+        <span class="node-hw font-medium text-gray-900">{hardware}</span>
       </div>
-    
     </div>
 
     <div class="pt-2 flex items-center gap-1.5">
        <span class="relative flex h-2 w-2">
-          <span class={`animate-ping absolute inline-flex h-full w-full rounded-full ${status === 'offline' ? 'bg-red-400' : 'bg-green-400'} opacity-75`}></span>
-          <span class={`relative inline-flex rounded-full h-2 w-2 ${status === 'offline' ? 'bg-red-500' : 'bg-green-500'}`}></span>
+          <span class="ping-icon animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+          <span class="status-dot relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
        </span>
-       <span class="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Uppdaterad: {lastUpdate}</span>
+       <span class="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Uppdaterad: <span class="node-lastseen">{lastUpdate}</span></span>
     </div>
   </div>
 </div>
