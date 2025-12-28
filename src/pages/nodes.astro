@@ -33,6 +33,13 @@ const nodes = [
     name: "YDRE Nod 01 (RAF)", 
     powerType: "solar" 
   },
+{ 
+    nodeHexId: "!1c5f55ac", // Detta ID hittar du i Meshtastic-appen (t.ex. !f4a2)
+    name: "Husqvarna Gateway", 
+    powerType: "plug" 
+  },
+
+
 
 ];
 
@@ -62,7 +69,7 @@ const nodes = [
 
   // 1. Inställningar för liamcottle
   // Vi använder wss (Websocket Secure) på port 8084
-  const brokerUrl = 'wss://broker.emqx.io:8084/mqtt';
+  const brokerUrl = 'wss://mqtt.meshtastic.org:443/api/v2/mqtt';
   
   const options = {
     clientId: 'lora_web_' + Math.random().toString(16).slice(2, 8),
@@ -70,7 +77,7 @@ const nodes = [
     connectTimeout: 4000,
   };
 
-  console.log('Ansluter till Emqx-Broker...');
+  console.log('Ansluter till meshtastic-Broker...');
   const client = mqtt.connect(brokerUrl, options);
 
   // 2. Vid anslutning - börja prenumerera
@@ -78,7 +85,7 @@ const nodes = [
     console.log('✅ Ansluten till MQTT Broker!');
     // Här sätter du din topic. 
     // Om du använder Meshtastic standard JSON, ändra till din topic:
-    client.subscribe('msh/EU_868/2/json/LongFast/#', (err) => {
+    client.subscribe('msh/2/json/#', (err) => {
       if (!err) {
         console.log('Prenumererar på Meshtastic JSON-data');
       }

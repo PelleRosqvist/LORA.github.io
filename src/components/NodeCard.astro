@@ -1,6 +1,6 @@
 ---
 // src/components/NodeCard.astro
-const { name, voltage, battery, channelUtil, airUtil, lastUpdate, powerType, status } = Astro.props;
+const { name, voltage, battery, channelUtil, airUtil, lastUpdate, powerType, status, hardware } = Astro.props;
 
 // Logik för att välja färg på batteriet
 const batteryColor = battery < 20 ? 'text-red-500' : battery < 50 ? 'text-yellow-600' : 'text-green-600';
@@ -41,6 +41,11 @@ const batteryColor = battery < 20 ? 'text-red-500' : battery < 50 ? 'text-yellow
         <span class="text-gray-500">✈ Air Util TX</span>
         <span class="font-medium text-gray-900">{airUtil}%</span>
       </div>
+    <div class="flex justify-between text-sm">
+        <span class="text-gray-500">☼ Hardware</span>
+        <span class="font-medium text-gray-900">{hardware}</span>
+      </div>
+    
     </div>
 
     <div class="pt-2 flex items-center gap-1.5">
