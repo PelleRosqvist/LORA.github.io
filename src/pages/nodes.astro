@@ -38,8 +38,16 @@ const nodes = [
     name: "Husqvarna Gateway", 
     powerType: "plug" 
   },
-
-
+{ 
+    nodeHexId: "!9e75f9e0", // Detta ID hittar du i Meshtastic-appen (t.ex. !f4a2)
+    name: "Okänd Test router", 
+    powerType: "plug" 
+  },
+{ 
+    nodeHexId: "!e0f604d8", // Detta ID hittar du i Meshtastic-appen (t.ex. !f4a2)
+    name: "Tor zum Kamptal - Router (TEST)", 
+    powerType: "plug" 
+  },
 
 ];
 
@@ -68,8 +76,8 @@ const nodes = [
 
 
   // 1. Inställningar för liamcottle
-  // Vi använder wss (Websocket Secure) på port 8084
-  const brokerUrl = 'wss://mqtt.meshtastic.org:443/api/v2/mqtt';
+  // Vi använder wss (Websocket Secure) på port 8884
+  const brokerUrl = 'wss://broker.hivemq.com:8884/mqtt';
   
   const options = {
     clientId: 'lora_web_' + Math.random().toString(16).slice(2, 8),
@@ -77,7 +85,7 @@ const nodes = [
     connectTimeout: 4000,
   };
 
-  console.log('Ansluter till meshtastic-Broker...');
+  console.log('Ansluter till hivemq-Broker...');
   const client = mqtt.connect(brokerUrl, options);
 
   // 2. Vid anslutning - börja prenumerera
@@ -85,7 +93,7 @@ const nodes = [
     console.log('✅ Ansluten till MQTT Broker!');
     // Här sätter du din topic. 
     // Om du använder Meshtastic standard JSON, ändra till din topic:
-    client.subscribe('msh/2/json/#', (err) => {
+    client.subscribe('msh/+/+/json/#', (err) => {
       if (!err) {
         console.log('Prenumererar på Meshtastic JSON-data');
       }
