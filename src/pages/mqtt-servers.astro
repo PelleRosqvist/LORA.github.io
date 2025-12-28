@@ -1,0 +1,197 @@
+---
+import MainLayouts from '../layouts/MainLayouts.astro';
+import { mqttServers } from '../config/mqtt-servers';
+---
+
+<MainLayouts title="MQTT Servrar | LORA">
+  <div class="mb-10">
+    <h1 class="text-4xl font-black text-yellow-400 mb-2">MQTT Servrar</h1>
+    <p class="text-gray-500 italic">Övervakning av anslutningsstatus för alla konfigurerade MQTT-servrar.</p>
+  </div>
+
+  <div class="grid grid-cols-1 gap-6">
+    {mqttServers.map((server) => (
+      <div 
+        id={`server-${server.id}`}
+        class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all"
+      >
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-1">{server.name}</h2>
+            <p class="text-sm text-gray-500 font-mono">{server.brokerUrl}</p>
+          </div>
+          <div class="flex gap-2">
+            <span class={`enabled-badge text-xs font-bold px-3 py-1 rounded-full ${server.enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+              {server.enabled ? '✅ Aktiverad' : '⊘ Inaktiverad'}
+            </span>
+            <span class={`connection-status text-xs font-bold px-3 py-1 rounded-full bg-gray-100 text-gray-600`}>
+              <span class="connection-dot relative inline-flex rounded-full h-2 w-2 mr-1 bg-gray-400"></span>
+              <span class="status-text">Ej ansluten</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="space-y-3 border-t border-gray-100 pt-4">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">Broker URL:</span>
+            <span class="font-mono text-gray-900">{server.brokerUrl}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">Topic:</span>
+            <span class="font-mono text-gray-900">{server.topic}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">Server ID:</span>
+            <span class="font-mono text-gray-900">{server.id}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">Senaste anslutningsförsök:</span>
+            <span class="server-last-attempt text-gray-900">—</span>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+</MainLayouts>
+
+<script>
+  import mqtt from 'mqtt';
+  
+  // Hämta servrar från samma config som nodes.astro använder
+  const mqttServersConfig = [
+    {
+      id: 'hivemq',
+      name: 'HiveMQ Public Broker',
+      brokerUrl: 'wss://broker.hivemq.com:8884/mqtt',
+      topic: 'msh/+/+/json/#',
+      enabled: true,
+    },
+    {
+      id: 'local',
+      name: 'Local Broker',
+      brokerUrl: 'wss://localhost:8884/mqtt',
+      topic: 'msh/+/+/json/#',
+      enabled: false,
+    },
+    {
+      id: 'EmqX',
+      name: 'EmqX public Broker',
+      brokerUrl: 'wss://broker.emqx.io:8084/mqtt',
+      topic: 'msh/+/+/json/#',
+      enabled: true,
+    },
+  ];
+
+  // Spåra anslutningsstatus
+  const serverStatus: Record<string, { connected: boolean; attempts: number; lastAttempt: Date | null }> = {};
+
+  // Initiera status för alla servrar
+  mqttServersConfig.forEach(server => {
+    serverStatus[server.id] = {
+      connected: false,
+      attempts: 0,
+      lastAttempt: null,
+    };
+  });
+
+  // Funktion för att uppdatera UI för en server
+  function updateServerUI(serverId: string, isConnected: boolean) {
+    const serverEl = document.getElementById(`server-${serverId}`);
+    if (!serverEl) return;
+
+    const connectionStatus = serverEl.querySelector('.connection-status');
+    const connectionDot = serverEl.querySelector('.connection-dot');
+    const statusText = serverEl.querySelector('.status-text');
+    const lastAttemptEl = serverEl.querySelector('.server-last-attempt');
+
+    if (connectionStatus) {
+      if (isConnected) {
+        connectionStatus.className = 'connection-status text-xs font-bold px-3 py-1 rounded-full bg-green-100 text-green-700';
+      } else {
+        connectionStatus.className = 'connection-status text-xs font-bold px-3 py-1 rounded-full bg-red-100 text-red-700';
+      }
+    }
+
+    if (connectionDot) {
+      connectionDot.className = isConnected 
+        ? 'connection-dot relative inline-flex rounded-full h-2 w-2 mr-1 bg-green-500 animate-pulse'
+        : 'connection-dot relative inline-flex rounded-full h-2 w-2 mr-1 bg-red-500';
+    }
+
+    if (statusText) {
+      statusText.innerText = isConnected ? 'Ansluten' : 'Ej ansluten';
+    }
+
+    if (lastAttemptEl) {
+      const status = serverStatus[serverId];
+      lastAttemptEl.innerText = status.lastAttempt 
+        ? status.lastAttempt.toLocaleTimeString('sv-SE')
+        : '—';
+    }
+  }
+
+  // Funktion för att ansluta till en server
+  function connectToServer(server: any) {
+    if (!server.enabled) {
+      console.log(`${server.name} är inaktiverad, hoppar över...`);
+      return;
+    }
+
+    serverStatus[server.id].attempts++;
+    serverStatus[server.id].lastAttempt = new Date();
+    updateServerUI(server.id, false);
+
+    const options = {
+      clientId: `lora_mqtt_monitor_${server.id}_${Math.random().toString(16).slice(2, 8)}`,
+      clean: true,
+      connectTimeout: 4000,
+      reconnectPeriod: 5000,
+    };
+
+    console.log(`[${server.name}] Ansluter...`);
+    const client = mqtt.connect(server.brokerUrl, options);
+
+    client.on('connect', () => {
+      serverStatus[server.id].connected = true;
+      console.log(`✅ [${server.name}] Ansluten!`);
+      updateServerUI(server.id, true);
+
+      client.subscribe(server.topic, (err) => {
+        if (!err) {
+          console.log(`[${server.name}] Prenumererar på ${server.topic}`);
+        }
+      });
+    });
+
+    client.on('error', (err) => {
+      serverStatus[server.id].connected = false;
+      console.error(`❌ [${server.name}] Anslutningsfel:`, err.message);
+      updateServerUI(server.id, false);
+    });
+
+    client.on('disconnect', () => {
+      serverStatus[server.id].connected = false;
+      console.log(`[${server.name}] Frånkopplad`);
+      updateServerUI(server.id, false);
+    });
+
+    client.on('close', () => {
+      serverStatus[server.id].connected = false;
+    });
+  }
+
+  // Anslut till alla servrar
+  mqttServersConfig.forEach(server => {
+    connectToServer(server);
+  });
+
+  // Försök återansluta inaktiverade servrar var 30:e sekund (om de aktiveras senare)
+  setInterval(() => {
+    mqttServersConfig.forEach(server => {
+      if (server.enabled && !serverStatus[server.id].connected) {
+        console.log(`Försöker återansluta till ${server.name}...`);
+        connectToServer(server);
+      }
+    });
+  }, 30000);
+</script>

@@ -172,6 +172,20 @@ const nodes = [
       });
       
       console.log('%c═══════════════════════════════════════', 'color: #00FF00; font-weight: bold;');
+      updateMqttStatusInNavbar(true);
+    }
+  }
+
+  function updateMqttStatusInNavbar(isConnected: boolean) {
+    const statusEl = document.getElementById('mqtt-status-text');
+    if (statusEl) {
+      if (isConnected) {
+        statusEl.innerText = '✅ Aktiva MQTT servrar är anslutna';
+        statusEl.className = 'text-green-300 font-bold';
+      } else {
+        statusEl.innerText = 'Väntar på anslutning';
+        statusEl.className = 'text-yellow-300 font-bold';
+      }
     }
   }
 

@@ -25,7 +25,7 @@ export const mqttServers: MqttServer[] = [
   {
     id: 'EmqX',
     name: 'EmqX public Broker',
-    brokerUrl: 'broker.emqx.io:8883/mqtt',
+    brokerUrl: 'wss://broker.emqx.io:8084/mqtt',
     topic: 'msh/+/+/json/#',
     enabled: true,
   },
