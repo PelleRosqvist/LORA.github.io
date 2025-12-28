@@ -29,4 +29,11 @@ export const mqttServers: MqttServer[] = [
     topic: 'msh/+/+/json/#',
     enabled: true,
   },
+  {
+      id: 'Meshtastic',
+      name: 'Meshtastic Public Broker',
+      brokerUrl: 'wss://mqtt.meshtastic.org/api/v2/mqtt',
+      topic: 'msh/2/json/#',
+      enabled: true,
+    },
 ];

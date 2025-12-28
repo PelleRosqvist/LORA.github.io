@@ -80,6 +80,13 @@ import { mqttServers } from '../config/mqtt-servers';
       topic: 'msh/+/+/json/#',
       enabled: true,
     },
+    {
+      id: 'Meshtastic',
+      name: 'Meshtastic Public Broker',
+      brokerUrl: 'wss://mqtt.meshtastic.org/api/v2/mqtt',
+      topic: 'msh/SE/2/json/#',
+      enabled: true,
+    },
   ];
 
   // Spåra anslutningsstatus

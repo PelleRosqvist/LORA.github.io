@@ -118,7 +118,13 @@ const nodes = [
       clean: true,
       connectTimeout: 4000,
     };
-
+// --- HÄR LÄGGER DU IN SPECIALKODEN ---
+    if (server.id === 'Meshtastic') {
+      options.protocolVersion = 4;
+      options.path = '/api/v2/mqtt'; 
+      console.log("🛠️ Applicerar Meshtastic-specifika inställningar...");
+    }
+    // -------------------------------------
     console.log(`Ansluter till ${server.name}...`);
     const client = mqtt.connect(server.brokerUrl, options);
 
