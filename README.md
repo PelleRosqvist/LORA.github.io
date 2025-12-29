@@ -19,11 +19,19 @@ Inside of your Astro project, you'll see the following folders and files:
 |   |       backround.svg
 │   ├── components
 │   │   └── NodeCard.astro   #Definerar hur nodekorten ser ut
-|   |       Welcome.astro    #Tja en sorts välkomstsida  
+|   |       Welcome.astro    #Tja en sorts välkomstsida 
+|   |__config
+|   |  |_ mqtt-servers.ts    #Definerar MQTT servrar som används
+|   | 
 │   ├── layouts
 │   │   └── Layout.astro
+|   |       MainLayouts.astro  #Main layout helt enkelt
 │   └── pages
-│       └── index.astro
+│   |    └── index.astro
+|   |       mqtt-servers.astro
+|   |       nodes.astro         #Definerar vilka nodes som ska visas 
+|   |__styles
+|   |    |__ global.css
 └── package.json
 ```
 

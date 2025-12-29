@@ -126,12 +126,12 @@ import { mqttServers } from '../config/mqtt-servers';
     }
 
     if (statusText) {
-      statusText.innerText = isConnected ? 'Ansluten' : 'Ej ansluten';
+      (statusText as HTMLElement).innerText = isConnected ? 'Ansluten' : 'Ej ansluten';
     }
 
     if (lastAttemptEl) {
       const status = serverStatus[serverId];
-      lastAttemptEl.innerText = status.lastAttempt 
+      (lastAttemptEl as HTMLElement).innerText = status.lastAttempt 
         ? status.lastAttempt.toLocaleTimeString('sv-SE')
         : '—';
     }
@@ -151,8 +151,8 @@ import { mqttServers } from '../config/mqtt-servers';
     const options = {
       clientId: `lora_mqtt_monitor_${server.id}_${Math.random().toString(16).slice(2, 8)}`,
       clean: true,
-      connectTimeout: 4000,
-      reconnectPeriod: 5000,
+      connectTimeout: 8000,
+      reconnectPeriod: 10000,
     };
 
     console.log(`[${server.name}] Ansluter...`);

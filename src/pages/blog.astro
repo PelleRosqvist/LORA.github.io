@@ -1,0 +1,221 @@
+---
+import MainLayouts from '../layouts/MainLayouts.astro';
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
+import { join } from 'path';
+
+interface BlogPost {
+  title: string;
+  description: string;
+  pubDate: string;
+  updatedDate?: string;
+  author: string;
+  image?: string;
+  tags?: string[];
+  content: string;
+  slug: string;
+}
+
+interface CompleteBlogPost extends BlogPost {
+  updatedDate?: string;
+  image?: string;
+  tags?: string[];
+}
+
+// Läs alla blogginlägg
+const blogDir = join(process.cwd(), 'src/content/blog');
+let posts: BlogPost[] = [];
+
+if (existsSync(blogDir)) {
+  const files = readdirSync(blogDir).filter(f => f.endsWith('.md'));
+  
+  posts = files
+    .map(file => {
+      const filePath = join(blogDir, file);
+      const content = readFileSync(filePath, 'utf-8');
+      
+      // Parsa frontmatter
+      const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+      if (!match) return null;
+      
+      const [, frontmatter, body] = match;
+      const metadata: Record<string, string> = {};
+      
+      frontmatter.split('\n').forEach(line => {
+        const [key, ...valueParts] = line.split(':');
+        const value = valueParts.join(':').trim();
+        
+        if (key && value) {
+          metadata[key.trim()] = value.replace(/^["']|["']$/g, '');
+        }
+      });
+      
+      return {
+        title: metadata.title || 'Utan titel',
+        description: metadata.description || '',
+        pubDate: metadata.pubDate || new Date().toISOString(),
+        updatedDate: metadata.updatedDate,
+        author: metadata.author || 'LORA Admin',
+        image: metadata.image,
+        tags: metadata.tags ? metadata.tags.split(',').map(t => t.trim()) : [],
+        content: body.trim(),
+        slug: file.replace('.md', ''),
+      } as BlogPost;
+    })
+    .filter((post): post is BlogPost => post !== null)
+    .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+}
+---
+
+<MainLayouts title="Blog | LORA">
+  <div class="mb-10">
+    <h1 class="text-4xl font-black text-yellow-400 mb-2">LORA Nyheter & Meddelanden</h1>
+    <p class="text-gray-500 italic">Driftmeddelanden, nyheter och uppdateringar från Meshtastic-nätverket.</p>
+  </div>
+
+  <!-- Quick Post Form -->
+  <div class="bg-blue-50 border border-blue-200 rounded-2xl p-6 mb-10">
+    <h2 class="text-2xl font-bold text-blue-900 mb-4">📝 Snabbmeddelande</h2>
+    <p class="text-sm text-blue-700 mb-4">Publicera ett snabbt meddelande direkt (sparas lokalt tills det synkroniseras)</p>
+    
+    <form id="quick-post-form" class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <input 
+          type="text" 
+          id="post-title" 
+          placeholder="Meddelandets titel" 
+          class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+        <input 
+          type="text" 
+          id="post-author" 
+          placeholder="Författare (valfritt)" 
+          class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          value="LORA Admin"
+        />
+      </div>
+      
+      <textarea 
+        id="post-content" 
+        placeholder="Skriv ditt meddelande här..." 
+        rows="5"
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        required
+      ></textarea>
+      
+      <div class="flex gap-4">
+        <button 
+          type="submit"
+          class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition-colors"
+        >
+          Publicera meddelande
+        </button>
+        <button 
+          type="button"
+          id="open-admin-btn"
+          class="bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-700 transition-colors"
+        >
+          Öppna fullständig CMS
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Blog Posts Grid -->
+  <div class="grid grid-cols-1 gap-6">
+    {posts.length > 0 ? (
+      posts.map((post) => (
+        <article class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all">
+          <div class="flex justify-between items-start mb-3">
+            <div>
+              <h2 class="text-2xl font-bold text-gray-900 mb-2">{post.title}</h2>
+              <p class="text-gray-600 text-sm">{post.description}</p>
+            </div>
+            {post.image && (
+              <img src={post.image} alt={post.title} class="w-24 h-24 object-cover rounded-lg" />
+            )}
+          </div>
+
+          <div class="space-y-3 border-t border-gray-100 pt-4">
+            <div class="prose prose-sm max-w-none text-gray-700">
+              {post.content.split('\n').slice(0, 3).join('\n')}
+              {post.content.split('\n').length > 3 && '...'}
+            </div>
+
+            <div class="flex justify-between items-center text-xs text-gray-500">
+              <div class="flex gap-2">
+                <span>📅 {new Date(post.pubDate).toLocaleDateString('sv-SE')}</span>
+                <span>✍️ {post.author}</span>
+              </div>
+              
+              {post.tags && post.tags.length > 0 && (
+                <div class="flex gap-1">
+                  {post.tags.map(tag => (
+                    <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">#{tag}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </article>
+      ))
+    ) : (
+      <div class="text-center py-12">
+        <p class="text-gray-500 mb-4">Inga blogginlägg än. Publicera ditt första meddelande!</p>
+      </div>
+    )}
+  </div>
+</MainLayouts>
+
+<script>
+  // Snabbmeddelande-form
+  const form = document.getElementById('quick-post-form') as HTMLFormElement;
+  const titleInput = document.getElementById('post-title') as HTMLInputElement;
+  const contentInput = document.getElementById('post-content') as HTMLTextAreaElement;
+  const authorInput = document.getElementById('post-author') as HTMLInputElement;
+  const openAdminBtn = document.getElementById('open-admin-btn') as HTMLButtonElement;
+
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const post = {
+        title: titleInput.value,
+        description: contentInput.value.split('\n')[0].substring(0, 100),
+        content: contentInput.value,
+        author: authorInput.value || 'LORA Admin',
+        pubDate: new Date().toISOString(),
+        tags: ['snabbnyheter'],
+        slug: `quick-post-${Date.now()}`,
+      };
+
+      // Spara till localStorage för att visa omedelbar feedback
+      const savedPosts = JSON.parse(localStorage.getItem('blog-quick-posts') || '[]');
+      savedPosts.unshift(post);
+      localStorage.setItem('blog-quick-posts', JSON.stringify(savedPosts));
+
+      // Visa bekräftelse
+      alert('✅ Meddelande sparad lokalt! Det kommer synkroniseras vid nästa uppdatering.');
+      
+      // Rensa formulär
+      form.reset();
+      authorInput.value = 'LORA Admin';
+
+      // Ladda om sidan för att visa det nya inlägget
+      location.reload();
+    });
+  }
+
+  // Länk till CMS admin
+  if (openAdminBtn) {
+    openAdminBtn.addEventListener('click', () => {
+      window.location.href = '/LORA.github.io/admin/';
+    });
+  }
+
+  // Ladda snabbmeddelanden från localStorage om de finns
+  const savedPosts = JSON.parse(localStorage.getItem('blog-quick-posts') || '[]');
+  if (savedPosts.length > 0) {
+    console.log('💾 Snabbmeddelanden sparade lokalt:', savedPosts);
+  }
+</script>

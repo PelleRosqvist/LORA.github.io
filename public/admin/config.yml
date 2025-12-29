@@ -1,0 +1,25 @@
+backend:
+  name: git-gateway
+  branch: main
+
+site_url: https://your-site.com
+logo_url: https://your-site.com/images/logo.png
+
+media_folder: "public/images/blog"
+public_folder: "/images/blog"
+
+collections:
+  - name: "blog"
+    label: "Blog"
+    folder: "src/content/blog"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Titel", name: "title", widget: "string" }
+      - { label: "Beskrivning", name: "description", widget: "string" }
+      - { label: "Publicering", name: "pubDate", widget: "datetime", format: "YYYY-MM-DD HH:mm" }
+      - { label: "Uppdaterande", name: "updatedDate", widget: "datetime", format: "YYYY-MM-DD HH:mm", required: false }
+      - { label: "Författare", name: "author", widget: "string", default: "LORA Admin" }
+      - { label: "Bild", name: "image", widget: "image", required: false }
+      - { label: "Innehål", name: "body", widget: "markdown" }
+      - { label: "Taggar", name: "tags", widget: "list", default: ["news"], required: false }

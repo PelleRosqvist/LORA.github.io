@@ -113,7 +113,7 @@ const nodes = [
       return;
     }
 
-    const options = {
+    const options: any = {
       clientId: `lora_web_${server.id}_${Math.random().toString(16).slice(2, 8)}`,
       clean: true,
       connectTimeout: 4000,
@@ -209,7 +209,7 @@ const nodes = [
 
         // Uppdatera BATTERI
         if (data.payload?.battery_level !== undefined) {
-          const batEl = card.querySelector('.node-battery');
+          const batEl = card.querySelector('.node-battery') as HTMLElement;
           if (batEl) {
             batEl.innerText = data.payload.battery_level + '%';
             // Ändra färg dynamiskt
@@ -225,13 +225,13 @@ const nodes = [
 
         // Uppdatera SPÄNNING
         if (data.payload?.voltage !== undefined) {
-          const voltEl = card.querySelector('.node-voltage');
+          const voltEl = card.querySelector('.node-voltage') as HTMLElement;
           if (voltEl) voltEl.innerText = data.payload.voltage.toFixed(2) + 'v';
         }
 
         // Uppdatera HÅRDVARA
         if (data.payload?.model) {
-          const hwEl = card.querySelector('.node-hw');
+          const hwEl = card.querySelector('.node-hw') as HTMLElement;
           if (hwEl) hwEl.innerText = data.payload.model.replace(/_/g, ' ');
         }
 
@@ -242,25 +242,33 @@ const nodes = [
           if (lat !== undefined && lat !== null && lon !== undefined && lon !== null) {
             const latNum = parseFloat(lat);
             const lonNum = parseFloat(lon);
-            const posEl = card.querySelector('.node-position');
-            const wrapper = card.querySelector('.node-position-wrapper');
-            if (posEl) posEl.innerText = `${latNum.toFixed(6)}, ${lonNum.toFixed(6)}`;
-            if (wrapper) {
-              wrapper.classList.remove('hidden');
-              const mapLink = wrapper.querySelector('a');
-              if (mapLink) mapLink.href = `https://www.google.com/maps?q=${latNum},${lonNum}`;
+            // Verifiera att parseFloat gav giltiga värden
+            if (!isNaN(latNum) && !isNaN(lonNum)) {
+              const posEl = card.querySelector('.node-position') as HTMLElement;
+              const wrapper = card.querySelector('.node-position-wrapper');
+              if (posEl) {
+                posEl.innerText = `${latNum.toFixed(6)}, ${lonNum.toFixed(6)}`;
+              }
+              if (wrapper) {
+                wrapper.classList.remove('hidden');
+                const mapLink = wrapper.querySelector('a') as HTMLAnchorElement;
+                if (mapLink) {
+                  mapLink.href = `https://www.google.com/maps?q=${latNum},${lonNum}`;
+                }
+              }
+              console.log(`📍 Position uppdaterad för ${hexId}: ${latNum.toFixed(6)}, ${lonNum.toFixed(6)}`);
             }
           }
         } catch (e) {
-          // ignore parsing errors for position
+          console.warn(`Position parsing error för ${hexId}:`, e);
         }
 
         // Uppdatera TID
-        const timeEl = card.querySelector('.node-lastseen');
+        const timeEl = card.querySelector('.node-lastseen') as HTMLElement;
         if (timeEl) timeEl.innerText = new Date().toLocaleTimeString();
 
         // Uppdatera KÄLLA (visa endast när data från källa kommer)
-        const sourceEl = card.querySelector('.node-source');
+        const sourceEl = card.querySelector('.node-source') as HTMLElement;
         const sourceWrapper = card.querySelector('.node-source-wrapper');
         if (sourceEl) {
           sourceEl.innerText = source;
@@ -272,6 +280,35 @@ const nodes = [
         // Visuell feedback (Blinka till)
         card.classList.add('border-blue-400', 'scale-[1.02]');
         setTimeout(() => card.classList.remove('border-blue-400', 'scale-[1.02]'), 500);
+
+        // Spara data till localStorage
+        try {
+          const nodeData = {
+            nodeHexId: hexId,
+            battery: data.payload?.battery_level ?? null,
+            voltage: data.payload?.voltage ?? null,
+            hardware: data.payload?.model ?? null,
+            channelUtil: data.payload?.channel_util_percent ?? null,
+            airUtil: data.payload?.air_util_tx ?? null,
+            latitude: null as number | null,
+            longitude: null as number | null,
+            source: source,
+            lastUpdate: new Date().toISOString(),
+          };
+
+          // Spara position om den finns
+          const lat = data.payload?.position?.latitude ?? data.payload?.position?.lat ?? data.payload?.gps?.lat ?? data.payload?.gps?.latitude ?? data.payload?.lat ?? data.lat;
+          const lon = data.payload?.position?.longitude ?? data.payload?.position?.lon ?? data.payload?.gps?.lon ?? data.payload?.gps?.longitude ?? data.payload?.lon ?? data.lon;
+          if (lat !== undefined && lat !== null && lon !== undefined && lon !== null) {
+            nodeData.latitude = parseFloat(lat);
+            nodeData.longitude = parseFloat(lon);
+          }
+
+          localStorage.setItem(`node-${hexId}`, JSON.stringify(nodeData));
+          console.log(`💾 Data sparad för ${hexId} i localStorage`);
+        } catch (e) {
+          console.warn(`Kunde inte spara data för ${hexId} i localStorage:`, e);
+        }
       }
     } catch (e) {
       console.error('Kunde inte tolka paket:', e);
