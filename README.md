@@ -44,9 +44,9 @@ Detta projekt använder en **MQTT-över-WebSockets** arkitektur för att visuali
 ### Nuvarande Status
 ![MQTT Status](https://img.shields.io/badge/MQTT_Broker-Online-brightgreen?style=for-the-badge&logo=mqtt)
 ![Network](https://img.shields.io/badge/Network-Tailscale_Protected-blue?style=for-the-badge&logo=tailscale)
-
+![--](https://camo.githubusercontent.com/db0c7bea55b4406f80e95c71e98f3a199e865cd59af7463ca69ae97c47c04fdd/68747470733a2f2f62616467656e2e6e65742f7374617469632f636f666665652532306472756e6b2f3639342532304c2f364634453337)
 ### Så fungerar det
-Systemet är uppbyggt som en kedja från radiomasten i Småland till din webbläsare:
+Systemet är uppbyggt som en kedja från LoRa mesh nätet till din webbläsare:
 
 1.  **LoRa-Noder:** Skickar sensordata och meddelanden via Meshtastic-protokollet.
 2.  **Raspberry Pi (Gateway):** Tar emot radiosignaler och publicerar dem till en lokal **Mosquitto MQTT-broker**.
