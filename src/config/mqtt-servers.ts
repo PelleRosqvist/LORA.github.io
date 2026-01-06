@@ -15,13 +15,17 @@ export const mqttServers: MqttServer[] = [
     topic: 'msh/+/+/json/#',
     enabled: true,
   },
-  {
-    id: 'local',
-    name: 'Local Broker',
-    brokerUrl: 'wss://localhost:8884/mqtt',
-    topic: 'msh/+/+/json/#',
-    enabled: false,
-  },
+    {
+      id: 'smaland-pi',
+      name: 'Småland Signalist Pi',
+  // Om du kör utan SSL/WSS (se varning nedan)
+      brokerUrl: 'ws://62.63.215.131:9001', 
+      topic: 'msh/#',
+      enabled: true,
+  // Lägg till dessa i objektet för att hantera inloggningen
+     username: 'signalist',
+     password: 'småland'
+    },
   {
     id: 'EmqX',
     name: 'EmqX public Broker',
@@ -29,11 +33,5 @@ export const mqttServers: MqttServer[] = [
     topic: 'msh/+/+/json/#',
     enabled: true,
   },
-  {
-      id: 'Meshtastic',
-      name: 'Meshtastic Public Broker',
-      brokerUrl: 'wss://mqtt.meshtastic.org/api/v2/mqtt',
-      topic: 'msh/+/+/json/#',
-      enabled: true,
-    },
+  
 ];
