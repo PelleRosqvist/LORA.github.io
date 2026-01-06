@@ -36,6 +36,29 @@ Inside of your Astro project, you'll see the following folders and files:
 ```
 
 To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+
+## 🛟 Driftstatus & Arkitektur
+
+Detta projekt använder en **MQTT-över-WebSockets** arkitektur för att visualisera LoRa-trafik i realtid.
+
+### Nuvarande Status
+![MQTT Status](https://img.shields.io/badge/MQTT_Broker-Online-brightgreen?style=for-the-badge&logo=mqtt)
+![Network](https://img.shields.io/badge/Network-Tailscale_Protected-blue?style=for-the-badge&logo=tailscale)
+
+### Så fungerar det
+Systemet är uppbyggt som en kedja från radiomasten i Småland till din webbläsare:
+
+1.  **LoRa-Noder:** Skickar sensordata och meddelanden via Meshtastic-protokollet.
+2.  **Raspberry Pi (Gateway):** Tar emot radiosignaler och publicerar dem till en lokal **Mosquitto MQTT-broker**.
+3.  **MQTT Broker:** Fungerar som projektets "postkontor" (Broker). Den sorterar inkommande JSON-data på olika *topics*.
+4.  **Webb-monitor (Astro):** Denna webbsida prenumererar på MQTT-topics via **WebSockets (Port 9001)** och uppdaterar gränssnittet i realtid utan att sidan behöver laddas om.
+
+> [!TIP]
+> För säker fjärradministration av MQTT-servern används **Tailscale**. Det skapar en krypterad tunnel direkt till Pajen, vilket gör att vi kan underhålla systemet säkert utan att exponera onödiga portar mot internet.
+
+
+
+
 ## MQTT server
 MQTT-servern (Mosquitto på en Pi 5) fungerar som ett digitalt postkontor.
 
