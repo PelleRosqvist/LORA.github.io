@@ -68,11 +68,15 @@ import { mqttServers } from '../config/mqtt-servers';
       enabled: true,
     },
     {
-      id: 'local',
-      name: 'Local Broker',
-      brokerUrl: 'wss://192.168.1.188:1884/mqtt',
-      topic: 'msh/+/+/json/#',
+      id: 'smaland-pi',
+      name: 'Småland Signalist Pi',
+  // Om du kör utan SSL/WSS (se varning nedan)
+      brokerUrl: 'ws://62.63.215.131:9001', 
+      topic: 'msh/#',
       enabled: true,
+  // Lägg till dessa i objektet för att hantera inloggningen
+     username: 'signalist',
+     password: 'småland'
     },
     {
       id: 'EmqX',
@@ -81,13 +85,7 @@ import { mqttServers } from '../config/mqtt-servers';
       topic: 'msh/+/+/json/#',
       enabled: true,
     },
-    {
-      id: 'Meshtastic',
-      name: 'Meshtastic Public Broker',
-      brokerUrl: 'wss://mqtt.meshtastic.org/api/v2/mqtt',
-      topic: 'msh/SE/2/json/#',
-      enabled: true,
-    },
+
   ];
 
   // Spåra anslutningsstatus
@@ -154,6 +152,9 @@ import { mqttServers } from '../config/mqtt-servers';
       clean: true,
       connectTimeout: 8000,
       reconnectPeriod: 10000,
+
+      username: server.username,
+      password: server.password,
     };
 
     console.log(`[${server.name}] Ansluter...`);
