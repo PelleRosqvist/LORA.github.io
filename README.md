@@ -93,21 +93,8 @@ Fixerad IP-adress: Även om din hemrouter startar om och får en ny publik IP fr
 Kryptering ingår: Tailscale använder WireGuard-protokollet, vilket innebär att all data mellan din webbläsare och din Pi är krypterad "by default", även om du bara kör ws:// (utan S).
 
 En viktig detalj för framtiden: Tailscale Funnel
-Om du i framtiden ändå vill visa datan på GitHub Pages men behålla Tailscale-säkerheten, finns en funktion som heter Tailscale Funnel. Den gör det möjligt att exponera enbart din MQTT-port (9001) till det publika nätet via Tailscales noder. Det fungerar lite som Cloudflare Tunnel men styrs direkt inifrån Tailscale.
+Impementera Tailscale, Vilket gör det möjligt att exponera enbart MQTT-porten (9001) till det publika nätet via Tailscales noder. Det fungerar lite som Cloudflare Tunnel men styrs direkt inifrån Tailscale.
+https://tailscale.com/
+[tailscale]([Project Board #2](https://github.com/users/PelleRosqvist/projects/2))
 
-## 🧞 Commands
 
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
