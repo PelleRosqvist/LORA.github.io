@@ -19,7 +19,7 @@ export const mqttServers: MqttServer[] = [
       id: 'smaland-pi',
       name: 'Småland Signalist Pi',
   // Om du kör utan SSL/WSS (se varning nedan)
-      brokerUrl: 'ws://62.63.215.131:9001', 
+      brokerUrl: 'wss://mqtt.rosqvist.net', 
       topic: 'msh/#',
       enabled: true,
   // Lägg till dessa i objektet för att hantera inloggningen
