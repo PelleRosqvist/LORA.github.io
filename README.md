@@ -35,11 +35,11 @@ Inside of your Astro project, you'll see the following folders and files:
 └── package.json
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
-
 ## 🛟 Driftstatus & Arkitektur
 
-Detta projekt använder en **MQTT-över-WebSockets** arkitektur för att visualisera LoRa-trafik i realtid.
+Detta projekt använder en **MQTT-över-WebSockets** arkitektur för att övervaka LoRa noder i realtid.
+Kanban-tavla för projektet hittar ni här: [Project Board #2](https://github.com/users/PelleRosqvist/projects/2)
+
 
 ### Nuvarande Status
 ![MQTT Status](https://img.shields.io/badge/MQTT_Broker-Online-brightgreen?style=for-the-badge&logo=mqtt)
@@ -49,11 +49,9 @@ Detta projekt använder en **MQTT-över-WebSockets** arkitektur för att visuali
 Systemet är uppbyggt som en kedja från LoRa mesh nätet till din webbläsare:
 
 1.  **LoRa-Noder:** Skickar sensordata och meddelanden via Meshtastic-protokollet.
-2.  **Raspberry Pi (Gateway):** Tar emot radiosignaler och publicerar dem till en lokal **Mosquitto MQTT-broker**.
+2.  **Raspberry Pi (Gateway):** Tar emot data från noder och publicerar dem till en lokal **Mosquitto MQTT-broker**.
 3.  **MQTT Broker:** Fungerar som projektets "postkontor" (Broker). Den sorterar inkommande JSON-data på olika *topics*.
 4.  **Webb-monitor (Astro):** Denna webbsida prenumererar på MQTT-topics via **WebSockets (Port 9001)** och uppdaterar gränssnittet i realtid utan att sidan behöver laddas om.
-
-Kanban-tavla för projektet hittar ni här: [Project Board #2](https://github.com/users/PelleRosqvist/projects/2)
 
 
 > [!TIP]
