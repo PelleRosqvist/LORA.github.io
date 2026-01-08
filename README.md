@@ -53,6 +53,9 @@ Systemet är uppbyggt som en kedja från LoRa mesh nätet till din webbläsare:
 3.  **MQTT Broker:** Fungerar som projektets "postkontor" (Broker). Den sorterar inkommande JSON-data på olika *topics*.
 4.  **Webb-monitor (Astro):** Denna webbsida prenumererar på MQTT-topics via **WebSockets (Port 9001)** och uppdaterar gränssnittet i realtid utan att sidan behöver laddas om.
 
+Kanban-tavla för projektet hittar ni här: [Project Board #2](https://github.com/users/PelleRosqvist/projects/2)
+
+
 > [!TIP]
 > För säker fjärradministration av MQTT-servern används **Tailscale**. Det skapar en krypterad tunnel direkt till MQTT servern, vilket gör att vi kan underhålla systemet säkert utan att exponera onödiga portar mot internet.
 
