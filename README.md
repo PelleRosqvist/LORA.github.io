@@ -85,16 +85,17 @@ Mosquitto: "Jag har nytt meddelande på topic msh/json!"
 Webbsidan: Tar emot JSON-paketet via WebSocket och ändrar texten på skärmen från "12.4V" till "12.2V".
 
 ## Saftey onboard
-Tailscale som din privata MQTT-brygga
-Ingen exponering: Du kan stänga port 9001 i routern helt. Mosquitto-broker "syns" inte längre på det öppna internetet, vilket tar bort 100% av risken för externa attacker.
+Tailscale som privat MQTT-brygga
+Ingen exponering: port 9001 stängd i routern. Mosquitto-broker "syns" inte längre på det öppna internetet, vilket tar bort 100% av risken för externa attacker.
 
-Fixerad IP-adress: Även om din hemrouter startar om och får en ny publik IP från din leverantör, så behåller din Raspberry Pi alltid samma Tailscale-IP (t.ex. 100.80.90.100). Din kod behöver alltså aldrig uppdateras.
+Fixerad IP-adress: Servern behåller alltid samma Tailscale-IP (t.ex. 100.80.90.100). Koden behöver alltså aldrig uppdateras.
 
-Kryptering ingår: Tailscale använder WireGuard-protokollet, vilket innebär att all data mellan din webbläsare och din Pi är krypterad "by default", även om du bara kör ws:// (utan S).
+Kryptering ingår: Tailscale använder WireGuard-protokollet, vilket innebär att all data mellan webbläsare och servern är krypterad "by default", även om du bara kör ws:// (utan S).
 
 En viktig detalj för framtiden: Tailscale Funnel
 Impementera Tailscale, Vilket gör det möjligt att exponera enbart MQTT-porten (9001) till det publika nätet via Tailscales noder. Det fungerar lite som Cloudflare Tunnel men styrs direkt inifrån Tailscale.
-https://tailscale.com/
-[tailscale]([Project Board #2](https://github.com/users/PelleRosqvist/projects/2))
+
+läs mer:
+[tailscale.com](https://github.com/users/PelleRosqvist/projects/2))
 
 
